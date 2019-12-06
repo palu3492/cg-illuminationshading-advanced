@@ -9,7 +9,7 @@ class GlApp {
         }
 
         this.scene = scene;
-        this.algorithm = 'gouraud';
+        this.algorithm = 'phong';
         this.shader = {
             gouraud_color: null, gouraud_texture: null,
             phong_color: null, phong_texture: null
@@ -43,7 +43,7 @@ class GlApp {
             phong_color_vs, phong_color_fs, phong_texture_vs, phong_texture_fs,
             emissive_vs, emissive_fs])
             .then((shaders) => this.LoadShaders(shaders))
-            .catch((error) => this.GetFileError(error));
+            .catch((error) => console.log(error));
 
         this.textures = [];
     }
@@ -144,27 +144,23 @@ class GlApp {
             //uniforms are global per model values
             //uploads information to the graphics card: uniform data per model
             //three floating values representing model color r,g,b
-            if (this.algorithm === 'gouraud' || this.algorithm === 'phong') {
-                // model
-                this.gl.uniform3fv(this.shader[shaderType].uniform.material_col, this.scene.models[i].material.color);
-                this.gl.uniform3fv(this.shader[shaderType].uniform.material_spec, this.scene.models[i].material.specular);
-                this.gl.uniform1f(this.shader[shaderType].uniform.shininess, this.scene.models[i].material.shininess);
-                // camera
-                this.gl.uniform3fv(this.shader[shaderType].uniform.camera_pos, this.scene.camera.position);
-                // lights
-                this.gl.uniform3fv(this.shader[shaderType].uniform.light_ambient, this.scene.light.ambient);
-                let program = this.shader[shaderType].program;
-                this.gl.uniform1i(this.gl.getUniformLocation(program, 'light_count_vert'), this.scene.light.point_lights.length);
-                this.gl.uniform1i(this.gl.getUniformLocation(program, 'light_count_frag'), this.scene.light.point_lights.length);
-                for(let l=0;l<this.scene.light.point_lights.length;l++){
-                    let light_col_uniform = this.gl.getUniformLocation(program, 'light_color['+l+']');
-                    let camera_pos_uniform = this.gl.getUniformLocation(program, 'light_position['+l+']');
-                    this.gl.uniform3fv(camera_pos_uniform, this.scene.light.point_lights[l].position);
-                    this.gl.uniform3fv(light_col_uniform, this.scene.light.point_lights[l].color);
-                }
-            } else {
-                // emissive
-                this.gl.uniform3fv(this.shader[shaderType].uniform.material, this.scene.models[i].material.color);
+
+            // model
+            this.gl.uniform3fv(this.shader[shaderType].uniform.material_col, this.scene.models[i].material.color);
+            this.gl.uniform3fv(this.shader[shaderType].uniform.material_spec, this.scene.models[i].material.specular);
+            this.gl.uniform1f(this.shader[shaderType].uniform.shininess, this.scene.models[i].material.shininess);
+            // camera
+            this.gl.uniform3fv(this.shader[shaderType].uniform.camera_pos, this.scene.camera.position);
+            // lights
+            this.gl.uniform3fv(this.shader[shaderType].uniform.light_ambient, this.scene.light.ambient);
+            let program = this.shader[shaderType].program;
+            this.gl.uniform1i(this.gl.getUniformLocation(program, 'light_count_vert'), this.scene.light.point_lights.length);
+            this.gl.uniform1i(this.gl.getUniformLocation(program, 'light_count_frag'), this.scene.light.point_lights.length);
+            for(let l=0;l<this.scene.light.point_lights.length;l++){
+                let light_col_uniform = this.gl.getUniformLocation(program, 'light_color['+l+']');
+                let camera_pos_uniform = this.gl.getUniformLocation(program, 'light_position['+l+']');
+                this.gl.uniform3fv(camera_pos_uniform, this.scene.light.point_lights[l].position);
+                this.gl.uniform3fv(light_col_uniform, this.scene.light.point_lights[l].color);
             }
 
             //parameters (shader's variable, transpose, actual 16 values to be 4x4matrix)
@@ -229,16 +225,11 @@ class GlApp {
         });
     }
 
-    GetFileError(error) {
-        console.log('Error:', error);
-    }
-
     LoadShaders(shaders) {
         this.LoadColorShader(shaders[0], shaders[1], 'gouraud_color');
         this.LoadTextureShader(shaders[2], shaders[3], 'gouraud_texture');
         this.LoadColorShader(shaders[4], shaders[5], 'phong_color');
         this.LoadTextureShader(shaders[6], shaders[7], 'phong_texture');
-        this.LoadEmissiveShader(shaders[8], shaders[9], 'emissive');
 
         this.InitializeGlApp();
     }
@@ -321,33 +312,6 @@ class GlApp {
                 tex_scale: tex_scale_uniform,
                 image: image_uniform,
                 shininess: shininess_uniform,
-                projection: projection_uniform,
-                view: view_uniform,
-                model: model_uniform
-            }
-        };
-    }
-
-    LoadEmissiveShader(vs_source, fs_source, program_name) {
-        let vertex_shader = this.CompileShader(vs_source, this.gl.VERTEX_SHADER);
-        let fragment_shader = this.CompileShader(fs_source, this.gl.FRAGMENT_SHADER);
-
-        let program = this.CreateShaderProgram(vertex_shader, fragment_shader);
-
-        this.gl.bindAttribLocation(program, this.vertex_position_attrib, 'vertex_position');
-        this.gl.bindAttribLocation(program, 0, 'FragColor');
-
-        this.LinkShaderProgram(program);
-
-        let material_uniform = this.gl.getUniformLocation(program, 'material_color');
-        let projection_uniform = this.gl.getUniformLocation(program, 'projection_matrix');
-        let view_uniform = this.gl.getUniformLocation(program, 'view_matrix');
-        let model_uniform = this.gl.getUniformLocation(program, 'model_matrix');
-
-        this.shader[program_name] = {
-            program: program,
-            uniform: {
-                material: material_uniform,
                 projection: projection_uniform,
                 view: view_uniform,
                 model: model_uniform
