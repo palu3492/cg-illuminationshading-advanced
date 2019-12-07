@@ -1,6 +1,6 @@
-class GlApp {
-    constructor(canvas_id, width, height, scene) {
-        this.canvas = document.getElementById(canvas_id);
+class WebGLApp {
+    constructor(canvas, width, height) {
+        this.canvas = canvas;
         this.canvas.width = width;
         this.canvas.height = height;
         this.gl = this.canvas.getContext('webgl2');
@@ -8,7 +8,13 @@ class GlApp {
             alert('Unable to initialize WebGL 2. Your browser may not support it.');
         }
 
-        this.scene = scene;
+        this.scene = {
+            models: [],
+            light : {
+                point_lights: []
+            }
+        };
+
         this.algorithm = 'phong';
         this.shader = {
             phong_color: null, phong_texture: null
@@ -38,7 +44,9 @@ class GlApp {
             .then((shaders) => this.LoadShaders(shaders))
             .catch((error) => console.log(error));
 
-        this.initialized = false;
+        this.initPromise = new Promise((resolve, reject) => {
+            this.resolve = resolve;
+        });
     }
 
     InitializeGlApp() {
@@ -59,14 +67,7 @@ class GlApp {
         //creates projections matrix based on field of view and aspect ratio
         glMatrix.mat4.perspective(this.projection_matrix, fov, aspect, 1.0, 50.0);
 
-        let cam_pos = this.scene.camera.position;
-        let cam_target = glMatrix.vec3.create();
-        let cam_up = this.scene.camera.up;
-        glMatrix.vec3.add(cam_target, cam_pos, this.scene.camera.direction);
-        //sets vrp and vpn
-        glMatrix.mat4.lookAt(this.view_matrix, cam_pos, cam_target, cam_up);
-
-        this.initialized = true;
+        this.resolve(); // Init complete
     }
 
     // InitializeTexture(image_url) {
@@ -184,16 +185,14 @@ class GlApp {
         }
     }
 
-    UpdateScene(scene) {
-        this.scene = scene;
+    UpdateScene() {
+        //this.scene = scene;
 
         let cam_pos = this.scene.camera.position;
         let cam_target = glMatrix.vec3.create();
         let cam_up = this.scene.camera.up;
         glMatrix.vec3.add(cam_target, cam_pos, this.scene.camera.direction);
         glMatrix.mat4.lookAt(this.view_matrix, cam_pos, cam_target, cam_up);
-
-        // this.Render();
     }
 
     GetFile(url) {
