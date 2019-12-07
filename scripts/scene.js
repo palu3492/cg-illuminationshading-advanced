@@ -15,7 +15,7 @@ let scene1 = {
                 shininess: 1
             },
             center: glMatrix.vec3.fromValues(0.0, 0.0, -8.0),  // x, y, z
-            size: glMatrix.vec3.fromValues(8.0, 1.0, 8.0)  // width, 1.0, depth
+            size: glMatrix.vec3.fromValues(20.0, 1.0, 20.0)  // width, 1.0, depth
         },
         {
             type: 'sphere',
