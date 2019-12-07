@@ -25,11 +25,11 @@ class Model {
             h: 0, // height
             d: 0 // depth
         };
-        this.convertToWebGL();
+        // this.convertToWebGL();
     }
 
     convertToWebGL(){
-        this.webGLRepresenation = {
+        return {
             type: this.type,
             shader: this.shader,
             material: {

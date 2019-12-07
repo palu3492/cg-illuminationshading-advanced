@@ -20,7 +20,7 @@ class Camera {
     }
 
     convertToWebGL(){
-        this.webGLRepresenation = {
+        return {
             position: glMatrix.vec3.fromValues(this.position.x, this.position.y, this.position.z),
             direction: glMatrix.vec3.fromValues(this.direction.x, this.direction.y, this.direction.z),
             up: glMatrix.vec3.fromValues(this.up.x, this.up.y, this.up.z)

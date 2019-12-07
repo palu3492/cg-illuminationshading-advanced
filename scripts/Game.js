@@ -12,8 +12,13 @@ class Game {
     }
 
     gameLoop(){
+        this.scene.models[0].center.x += 0.01;
+        this.scene.models[1].center.x -= 0.01;
+        this.scene.models[1].center.z -= 0.01;
+        this.scene.point_lights[0].position.x -= 0.01;
         this.controls.keyPressed();
 
+        this.scene.convertToWebGLScene();
         this.scene.updateWebGLScene();
         this.webgl.UpdateScene();
         this.webgl.Render();

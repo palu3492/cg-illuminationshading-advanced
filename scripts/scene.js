@@ -20,33 +20,31 @@ class Scene {
         };
 
         let cube = new Cube();
+        let sphere = new Sphere();
         this.models.push(cube);
+        this.models.push(sphere);
 
         let point_light = new PointLight();
         this.point_lights.push(point_light);
 
         this.camera = new Camera();
+        this.scene_.camera = this.camera.convertToWebGL();
     }
 
     convertToWebGLScene(){
-
         this.scene_.models = [];
         this.models.forEach(model => {
             this.scene_.models.push(
-                model.webGLRepresenation
+                model.convertToWebGL()
             );
         });
 
         this.scene_.light.point_lights = [];
         this.point_lights.forEach(light => {
             this.scene_.light.point_lights.push(
-                light.webGLRepresenation
+                light.convertToWebGL()
             );
         });
-
-        this.scene_.camera = this.camera.webGLRepresenation;
-
-        console.log(this.scene_);
     }
 
     get scene(){

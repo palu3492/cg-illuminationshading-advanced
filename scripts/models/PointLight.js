@@ -17,7 +17,7 @@ class PointLight {
     }
 
     convertToWebGL(){
-        this.webGLRepresenation = {
+        return {
             position: [this.position.x, this.position.y, this.position.z],
             color: [this.color.r, this.color.g, this.color.b]
         }

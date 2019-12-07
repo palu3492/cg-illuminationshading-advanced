@@ -53,7 +53,7 @@ class Controls {
         let scene = this.scene.scene;
 
         rotate = glMatrix.mat4.create();
-        glMatrix.mat4.rotate(rotate, rotate, (Math.PI / 100) * (-movementX/20), scene.camera.up);
+        glMatrix.mat4.rotate(rotate, rotate, (Math.PI / 100) * (-movementX/40), scene.camera.up);
         dir = glMatrix.vec4.fromValues(scene.camera.direction[0], scene.camera.direction[1],
             scene.camera.direction[2], 1.0);
         glMatrix.vec4.transformMat4(dir, dir, rotate);
@@ -79,24 +79,24 @@ class Controls {
             // W
             if(key === 87){
                 dir = glMatrix.vec3.create();
-                glMatrix.vec3.scale(dir, scene.camera.direction, 0.5);
+                glMatrix.vec3.scale(dir, scene.camera.direction, 0.2);
                 glMatrix.vec3.add(scene.camera.position, scene.camera.position, dir);
             // S
             } else if(key === 83){
                 dir = glMatrix.vec3.create();
-                glMatrix.vec3.scale(dir, scene.camera.direction, 0.5);
+                glMatrix.vec3.scale(dir, scene.camera.direction, 0.2);
                 glMatrix.vec3.subtract(scene.camera.position, scene.camera.position, dir);
             // A
             } else if(key === 65){
                 dir = glMatrix.vec3.create();
                 glMatrix.vec3.cross(dir, scene.camera.direction, scene.camera.up);
-                glMatrix.vec3.scale(dir, dir, 0.5);
+                glMatrix.vec3.scale(dir, dir, 0.2);
                 glMatrix.vec3.subtract(scene.camera.position, scene.camera.position, dir);
             // D
             } else if(key === 68){
                 dir = glMatrix.vec3.create();
                 glMatrix.vec3.cross(dir, scene.camera.direction, scene.camera.up);
-                glMatrix.vec3.scale(dir, dir, 0.5);
+                glMatrix.vec3.scale(dir, dir, 0.2);
                 glMatrix.vec3.add(scene.camera.position, scene.camera.position, dir);
             }
         }
