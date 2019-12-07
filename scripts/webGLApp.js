@@ -11,7 +11,6 @@ class GlApp {
         this.scene = scene;
         this.algorithm = 'phong';
         this.shader = {
-            gouraud_color: null, gouraud_texture: null,
             phong_color: null, phong_texture: null
         };
         this.vertex_position_attrib = 0;
@@ -27,10 +26,6 @@ class GlApp {
 
         this.vertex_array = { plane: null, cube: null, sphere: null };
 
-        let gouraud_color_vs = this.GetFile('shaders/gouraud_color.vert');
-        let gouraud_color_fs = this.GetFile('shaders/gouraud_color.frag');
-        let gouraud_texture_vs = this.GetFile('shaders/gouraud_texture.vert');
-        let gouraud_texture_fs = this.GetFile('shaders/gouraud_texture.frag');
         let phong_color_vs = this.GetFile('shaders/phong_color.vert');
         let phong_color_fs = this.GetFile('shaders/phong_color.frag');
         let phong_texture_vs = this.GetFile('shaders/phong_texture.vert');
@@ -39,13 +34,11 @@ class GlApp {
         let emissive_fs = this.GetFile('shaders/emissive.frag');
 
         //loads and compiles stuff on graphics card
-        Promise.all([gouraud_color_vs, gouraud_color_fs, gouraud_texture_vs, gouraud_texture_fs,
-            phong_color_vs, phong_color_fs, phong_texture_vs, phong_texture_fs,
-            emissive_vs, emissive_fs])
+        Promise.all([phong_color_vs, phong_color_fs, phong_texture_vs, phong_texture_fs,emissive_vs, emissive_fs])
             .then((shaders) => this.LoadShaders(shaders))
             .catch((error) => console.log(error));
 
-        this.textures = [];
+        this.initialized = false;
     }
 
     InitializeGlApp() {
@@ -73,35 +66,35 @@ class GlApp {
         //sets vrp and vpn
         glMatrix.mat4.lookAt(this.view_matrix, cam_pos, cam_target, cam_up);
 
-        this.Render();
+        this.initialized = true;
     }
 
-    InitializeTexture(image_url) {
-        let texture = this.gl.createTexture();
-
-        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1, 1, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE,
-            new Uint8Array([255, 255, 255, 255])); // make texture all white while image loads
-        this.gl.bindTexture(this.gl.TEXTURE_2D, null);
-
-        // load the actual image
-        let image = new Image();
-        image.crossOrigin = 'anonymous';
-        image.addEventListener('load', (event) => {
-            this.UpdateTexture(texture, image);
-        }, false);
-        image.src = image_url;
-
-        return texture;
-    }
-
-    UpdateTexture(texture, image_element) {
-        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA,this.gl.UNSIGNED_BYTE, image_element);
-        this.gl.generateMipmap(this.gl.TEXTURE_2D);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, null);
-        this.Render(); // Render again with image this time
-    }
+    // InitializeTexture(image_url) {
+    //     let texture = this.gl.createTexture();
+    //
+    //     this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+    //     this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1, 1, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE,
+    //         new Uint8Array([255, 255, 255, 255])); // make texture all white while image loads
+    //     this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+    //
+    //     // load the actual image
+    //     let image = new Image();
+    //     image.crossOrigin = 'anonymous';
+    //     image.addEventListener('load', (event) => {
+    //         this.UpdateTexture(texture, image);
+    //     }, false);
+    //     image.src = image_url;
+    //
+    //     return texture;
+    // }
+    //
+    // UpdateTexture(texture, image_element) {
+    //     this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+    //     this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA,this.gl.UNSIGNED_BYTE, image_element);
+    //     this.gl.generateMipmap(this.gl.TEXTURE_2D);
+    //     this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+    //     this.Render(); // Render again with image this time
+    // }
 
     Render() {
         //clear color and depth
@@ -110,7 +103,6 @@ class GlApp {
         // draw all models --> note you need to properly select shader here
         // this will be dependent on the this.algorithm and the color/texture shader
 
-        // shaderType = 'emissive';
         for (let i = 0; i < this.scene.models.length; i++) {
 
             //goroud or phong
@@ -201,12 +193,7 @@ class GlApp {
         glMatrix.vec3.add(cam_target, cam_pos, this.scene.camera.direction);
         glMatrix.mat4.lookAt(this.view_matrix, cam_pos, cam_target, cam_up);
 
-        this.Render();
-    }
-
-    SetShadingAlgorithm(algorithm) {
-        this.algorithm = algorithm;
-        this.Render();
+        // this.Render();
     }
 
     GetFile(url) {
@@ -226,10 +213,9 @@ class GlApp {
     }
 
     LoadShaders(shaders) {
-        this.LoadColorShader(shaders[0], shaders[1], 'gouraud_color');
-        this.LoadTextureShader(shaders[2], shaders[3], 'gouraud_texture');
-        this.LoadColorShader(shaders[4], shaders[5], 'phong_color');
-        this.LoadTextureShader(shaders[6], shaders[7], 'phong_texture');
+        this.LoadColorShader(shaders[0], shaders[1], 'phong_color');
+        this.LoadTextureShader(shaders[2], shaders[3], 'phong_texture');
+        this.LoadEmissiveShader(shaders[4], shaders[5], 'emissive');
 
         this.InitializeGlApp();
     }
@@ -312,6 +298,33 @@ class GlApp {
                 tex_scale: tex_scale_uniform,
                 image: image_uniform,
                 shininess: shininess_uniform,
+                projection: projection_uniform,
+                view: view_uniform,
+                model: model_uniform
+            }
+        };
+    }
+
+    LoadEmissiveShader(vs_source, fs_source, program_name) {
+        let vertex_shader = this.CompileShader(vs_source, this.gl.VERTEX_SHADER);
+        let fragment_shader = this.CompileShader(fs_source, this.gl.FRAGMENT_SHADER);
+
+        let program = this.CreateShaderProgram(vertex_shader, fragment_shader);
+
+        this.gl.bindAttribLocation(program, this.vertex_position_attrib, 'vertex_position');
+        this.gl.bindAttribLocation(program, 0, 'FragColor');
+
+        this.LinkShaderProgram(program);
+
+        let material_uniform = this.gl.getUniformLocation(program, 'material_color');
+        let projection_uniform = this.gl.getUniformLocation(program, 'projection_matrix');
+        let view_uniform = this.gl.getUniformLocation(program, 'view_matrix');
+        let model_uniform = this.gl.getUniformLocation(program, 'model_matrix');
+
+        this.shader[program_name] = {
+            program: program,
+            uniform: {
+                material: material_uniform,
                 projection: projection_uniform,
                 view: view_uniform,
                 model: model_uniform
