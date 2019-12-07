@@ -1,78 +1,75 @@
+class Scene {
+    constructor(webgl) {
+        this.webgl = webgl;
 
-let scene1 = {
-    camera: {
-        position: glMatrix.vec3.fromValues(0.0, 1.8, 0.0),  // x, y, z
-        direction: glMatrix.vec3.fromValues(0.0, 0.0, -1.0),  // vector pointing in direction camera is looking
-        up: glMatrix.vec3.fromValues(0.0, 1.0, 0.0)  // vector pointing in camera's up direction
-    },
-    models: [
-        {
-            type: 'plane',
-            shader: 'color',
-            material: {
-                color: glMatrix.vec3.fromValues(0.7, 0.1, 0.1),  // red, green, blue
-                specular: glMatrix.vec3.fromValues(0.0, 0.0, 0.0),  // red, green, blue
-                shininess: 1
-            },
-            center: glMatrix.vec3.fromValues(0.0, 0.0, -8.0),  // x, y, z
-            size: glMatrix.vec3.fromValues(20.0, 1.0, 20.0)  // width, 1.0, depth
-        },
-        {
-            type: 'sphere',
-            shader: 'color',
-            material: {
-                color: glMatrix.vec3.fromValues(0.1, 0.4, 0.9),  // red, green, blue
-                specular: glMatrix.vec3.fromValues(1.0, 1.0, 1.0),  // red, green, blue
-                shininess: 20
-            },
-            center: glMatrix.vec3.fromValues(0.0, 1.0, -6.0), // x, y, z
-            size: glMatrix.vec3.fromValues(2.0, 2.0, 2.0)  // width, height, depth
-        },
-        {
-            type: 'sphere',
-            shader: 'color',
-            material: {
-                color: glMatrix.vec3.fromValues(0.1, 0.4, 0.9),  // red, green, blue
-                specular: glMatrix.vec3.fromValues(1.0, 1.0, 1.0),  // red, green, blue
-                shininess: 20
-            },
-            center: glMatrix.vec3.fromValues(2.0, 0.5, -5.0), // x, y, z
-            size: glMatrix.vec3.fromValues(1.0, 1.0, 1.0)  // width, height, depth
-        },
-        {
-            type: 'cube',
-            shader: 'color',
-            material: {
-                color: glMatrix.vec3.fromValues(0.1, 0.4, 0.9),  // red, green, blue
-                specular: glMatrix.vec3.fromValues(1.0, 1.0, 1.0),  // red, green, blue
-                shininess: 10
-            },
-            center: glMatrix.vec3.fromValues(-3.0, 0.5, -7.5), // x, y, z
-            size: glMatrix.vec3.fromValues(1.0, 1.0, 1.0)  // width, height, depth
-        },
-        {
-            type: 'cube',
-            shader: 'color',
-            material: {
-                color: glMatrix.vec3.fromValues(0.1, 0.4, 0.9),  // red, green, blue
-                specular: glMatrix.vec3.fromValues(1.0, 1.0, 1.0),  // red, green, blue
-                shininess: 10
-            },
-            center: glMatrix.vec3.fromValues(0, 4, -5.5), // x, y, z
-            size: glMatrix.vec3.fromValues(1.0, 1.0, 1.0)  // width, height, depth
-        }
-    ],
-    light: {
-        ambient: glMatrix.vec3.fromValues(0.5, 0.5, 0.5),  // red, green, blue
-        point_lights: [
-            {
-                "position": [2.2, 2.5, -4.8],
-                "color": [1.0, 1.0, 1.0]
-            },
-            {
-                "position": [-1.5, 0.8, -3.1],
-                "color": [1.0, 1.0, 1.0]
-            }
-        ]
+
+        this.models = [];
+        this.point_lights = [];
+
+        this.setScene();
+        this.convertToWebGLScene();
     }
-};
+
+    setScene(){
+        this.scene_ = {
+            models: [],
+            light : {
+                ambient: glMatrix.vec3.fromValues(0.5, 0.5, 0.5),
+                point_lights: []
+            }
+        };
+
+        let cube = new Cube();
+        this.models.push(cube);
+
+        let point_light = new PointLight();
+        this.point_lights.push(point_light);
+
+        this.camera = new Camera();
+    }
+
+    convertToWebGLScene(){
+
+        this.scene_.models = [];
+        this.models.forEach(model => {
+            this.scene_.models.push(
+                model.webGLRepresenation
+            );
+        });
+
+        this.scene_.light.point_lights = [];
+        this.point_lights.forEach(light => {
+            this.scene_.light.point_lights.push(
+                light.webGLRepresenation
+            );
+        });
+
+        this.scene_.camera = this.camera.webGLRepresenation;
+
+        console.log(this.scene_);
+    }
+
+    get scene(){
+        return this.scene_;
+    }
+
+    set scene(scene){
+        this.scene_ = scene;
+    }
+
+    // set camera(camera){
+    //     this.scene_.camera = camera;
+    // }
+
+    addModel(model){
+        this.scene_.models.push(model);
+    }
+
+    addPointLight(light){
+        this.scene_.light.point_lights.push(light);
+    }
+
+    updateWebGLScene(){
+        this.webgl.scene = this.scene_;
+    }
+}

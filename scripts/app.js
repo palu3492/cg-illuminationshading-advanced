@@ -4,8 +4,8 @@ class App {
         // let scene = new Scene();
         // console.log(scene.scene);
         let canvas = document.getElementById('view');
-        this.webgl = new WebGLApp(canvas, 1080, 720); // setup WebGL with canvas to render everything
-        this.game = new Game(this.webgl, canvas);
+        this.webgl = new WebGLApp(canvas, 1080, 720); // Renders everything
+        this.game = new Game(this.webgl, canvas); // Controls game logic
     }
 }
 

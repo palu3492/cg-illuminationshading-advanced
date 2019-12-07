@@ -1,10 +1,11 @@
 
 class Controls {
 
-    constructor(canvas, webgl) {
+    constructor(canvas, webgl, scene) {
         this.canvas = canvas;
         this.webgl = webgl;
         this.keys = {};
+        this.scene = scene;
         this.pointerLockSetup();
     }
 
@@ -49,7 +50,7 @@ class Controls {
         // console.log(movementX);
         let dir;
         let rotate;
-        let scene = scene1;
+        let scene = this.scene.scene;
 
         rotate = glMatrix.mat4.create();
         glMatrix.mat4.rotate(rotate, rotate, (Math.PI / 100) * (-movementX/20), scene.camera.up);
@@ -58,8 +59,7 @@ class Controls {
         glMatrix.vec4.transformMat4(dir, dir, rotate);
         glMatrix.vec3.set(scene.camera.direction, dir[0], dir[1], dir[2]);
 
-        this.webgl.scene = scene;
-
+        this.scene.scene = scene;
     }
 
     keyDown(e){
@@ -70,9 +70,9 @@ class Controls {
         delete this.keys[e.keyCode];
     }
 
-    checkChange(){
+    keyPressed(){
         let dir;
-        let scene = scene1;
+        let scene = this.scene.scene;
         // W, A, S, D
         for(let key in this.keys) {
             key = parseInt(key);
@@ -100,6 +100,6 @@ class Controls {
                 glMatrix.vec3.add(scene.camera.position, scene.camera.position, dir);
             }
         }
-        this.webgl.scene = scene;
+        this.scene.scene = scene;
     }
 }

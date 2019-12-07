@@ -3,17 +3,18 @@ class Game {
     constructor(webgl, canvas) {
         this.webgl = webgl;
         // this.canvas = canvas;
-        this.controls = new Controls(canvas, this.webgl);
+        this.scene = new Scene(webgl);
 
+        this.controls = new Controls(canvas, this.webgl, this.scene);
+
+
+        this.webgl.scene_setup = true;
     }
 
     gameLoop(){
-        this.controls.checkChange();
-        // console.log('Render');
-        // this.webgl.scene.camera = scene1.camera;
-        // this.webgl.scene.models = scene1.models;
-        // this.webgl.scene.light = scene1.light;
-        this.webgl.scene = scene1;
+        this.controls.keyPressed();
+
+        this.scene.updateWebGLScene();
         this.webgl.UpdateScene();
         this.webgl.Render();
 

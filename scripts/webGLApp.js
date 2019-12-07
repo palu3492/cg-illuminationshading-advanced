@@ -8,12 +8,8 @@ class WebGLApp {
             alert('Unable to initialize WebGL 2. Your browser may not support it.');
         }
 
-        this.scene = {
-            models: [],
-            light : {
-                point_lights: []
-            }
-        };
+        this.scene = {};
+        this.scene_setup = false;
 
         this.algorithm = 'phong';
         this.shader = {
@@ -103,96 +99,97 @@ class WebGLApp {
 
         // draw all models --> note you need to properly select shader here
         // this will be dependent on the this.algorithm and the color/texture shader
+        if(this.scene_setup) {
+            for (let i = 0; i < this.scene.models.length; i++) {
 
-        for (let i = 0; i < this.scene.models.length; i++) {
+                //goroud or phong
+                //loop through models
+                //-based on texture undefined or not, run different scripts
+                let shader = this.scene.models[i].shader; // 'color' or 'texture'
 
-            //goroud or phong
-            //loop through models
-            //-based on texture undefined or not, run different scripts
-            let shader = this.scene.models[i].shader; // 'color' or 'texture'
+                let shaderType = 'emissive';
+                if (this.algorithm !== 'emissive') {
+                    shaderType = this.algorithm + '_' + shader; // phong_color
+                }
 
-            let shaderType = 'emissive';
-            if(this.algorithm !== 'emissive'){
-                shaderType = this.algorithm+'_'+shader; // phong_color
+                //this tells us which program shader to use
+                this.gl.useProgram(this.shader[shaderType].program);
+                // console.log(this.scene.models[i].texture);
+
+                // building up the model matrix, which is the translate and scale matrix
+                glMatrix.mat4.identity(this.model_matrix);
+                glMatrix.mat4.translate(this.model_matrix, this.model_matrix, this.scene.models[i].center);
+                glMatrix.mat4.scale(this.model_matrix, this.model_matrix, this.scene.models[i].size);
+
+                // Add texture to model
+                if (shader === 'texture') {
+                    this.gl.uniform2fv(this.shader[shaderType].uniform.tex_scale, this.scene.models[i].texture.scale);
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+                    let texture = this.scene.models[i].texture.id;
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+                    // this.gl.activeTexture(this.gl.TEXTURE0);
+                }
+
+                //uniforms are global per model values
+                //uploads information to the graphics card: uniform data per model
+                //three floating values representing model color r,g,b
+
+                // model
+                this.gl.uniform3fv(this.shader[shaderType].uniform.material_col, this.scene.models[i].material.color);
+                this.gl.uniform3fv(this.shader[shaderType].uniform.material_spec, this.scene.models[i].material.specular);
+                this.gl.uniform1f(this.shader[shaderType].uniform.shininess, this.scene.models[i].material.shininess);
+                // camera
+                this.gl.uniform3fv(this.shader[shaderType].uniform.camera_pos, this.scene.camera.position);
+                // lights
+                this.gl.uniform3fv(this.shader[shaderType].uniform.light_ambient, this.scene.light.ambient);
+                let program = this.shader[shaderType].program;
+                this.gl.uniform1i(this.gl.getUniformLocation(program, 'light_count_vert'), this.scene.light.point_lights.length);
+                this.gl.uniform1i(this.gl.getUniformLocation(program, 'light_count_frag'), this.scene.light.point_lights.length);
+                for (let l = 0; l < this.scene.light.point_lights.length; l++) {
+                    let light_col_uniform = this.gl.getUniformLocation(program, 'light_color[' + l + ']');
+                    let camera_pos_uniform = this.gl.getUniformLocation(program, 'light_position[' + l + ']');
+                    this.gl.uniform3fv(camera_pos_uniform, this.scene.light.point_lights[l].position);
+                    this.gl.uniform3fv(light_col_uniform, this.scene.light.point_lights[l].color);
+                }
+
+                //parameters (shader's variable, transpose, actual 16 values to be 4x4matrix)
+                this.gl.uniformMatrix4fv(this.shader[shaderType].uniform.projection, false, this.projection_matrix);
+                this.gl.uniformMatrix4fv(this.shader[shaderType].uniform.view, false, this.view_matrix);
+                this.gl.uniformMatrix4fv(this.shader[shaderType].uniform.model, false, this.model_matrix);
+
+                this.gl.bindVertexArray(this.vertex_array[this.scene.models[i].type]);
+                this.gl.drawElements(this.gl.TRIANGLES, this.vertex_array[this.scene.models[i].type].face_index_count, this.gl.UNSIGNED_SHORT, 0);
+                this.gl.bindVertexArray(null);
             }
+            //leave this hardcoded for the lights
+            // draw all light sources
+            for (let i = 0; i < this.scene.light.point_lights.length; i++) {
+                this.gl.useProgram(this.shader['emissive'].program);
 
-            //this tells us which program shader to use
-            this.gl.useProgram(this.shader[shaderType].program);
-            // console.log(this.scene.models[i].texture);
+                glMatrix.mat4.identity(this.model_matrix);
+                glMatrix.mat4.translate(this.model_matrix, this.model_matrix, this.scene.light.point_lights[i].position);
+                glMatrix.mat4.scale(this.model_matrix, this.model_matrix, glMatrix.vec3.fromValues(0.1, 0.1, 0.1));
 
-            // building up the model matrix, which is the translate and scale matrix
-            glMatrix.mat4.identity(this.model_matrix);
-            glMatrix.mat4.translate(this.model_matrix, this.model_matrix, this.scene.models[i].center);
-            glMatrix.mat4.scale(this.model_matrix, this.model_matrix, this.scene.models[i].size);
+                this.gl.uniform3fv(this.shader['emissive'].uniform.material, this.scene.light.point_lights[i].color);
+                this.gl.uniformMatrix4fv(this.shader['emissive'].uniform.projection, false, this.projection_matrix);
+                this.gl.uniformMatrix4fv(this.shader['emissive'].uniform.view, false, this.view_matrix);
+                this.gl.uniformMatrix4fv(this.shader['emissive'].uniform.model, false, this.model_matrix);
 
-            // Add texture to model
-            if(shader === 'texture'){
-                this.gl.uniform2fv(this.shader[shaderType].uniform.tex_scale, this.scene.models[i].texture.scale);
-                this.gl.bindTexture(this.gl.TEXTURE_2D, null);
-                let texture = this.scene.models[i].texture.id;
-                this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-                // this.gl.activeTexture(this.gl.TEXTURE0);
+                this.gl.bindVertexArray(this.vertex_array['sphere']);
+                this.gl.drawElements(this.gl.TRIANGLES, this.vertex_array['sphere'].face_index_count, this.gl.UNSIGNED_SHORT, 0);
+                this.gl.bindVertexArray(null);
             }
-
-            //uniforms are global per model values
-            //uploads information to the graphics card: uniform data per model
-            //three floating values representing model color r,g,b
-
-            // model
-            this.gl.uniform3fv(this.shader[shaderType].uniform.material_col, this.scene.models[i].material.color);
-            this.gl.uniform3fv(this.shader[shaderType].uniform.material_spec, this.scene.models[i].material.specular);
-            this.gl.uniform1f(this.shader[shaderType].uniform.shininess, this.scene.models[i].material.shininess);
-            // camera
-            this.gl.uniform3fv(this.shader[shaderType].uniform.camera_pos, this.scene.camera.position);
-            // lights
-            this.gl.uniform3fv(this.shader[shaderType].uniform.light_ambient, this.scene.light.ambient);
-            let program = this.shader[shaderType].program;
-            this.gl.uniform1i(this.gl.getUniformLocation(program, 'light_count_vert'), this.scene.light.point_lights.length);
-            this.gl.uniform1i(this.gl.getUniformLocation(program, 'light_count_frag'), this.scene.light.point_lights.length);
-            for(let l=0;l<this.scene.light.point_lights.length;l++){
-                let light_col_uniform = this.gl.getUniformLocation(program, 'light_color['+l+']');
-                let camera_pos_uniform = this.gl.getUniformLocation(program, 'light_position['+l+']');
-                this.gl.uniform3fv(camera_pos_uniform, this.scene.light.point_lights[l].position);
-                this.gl.uniform3fv(light_col_uniform, this.scene.light.point_lights[l].color);
-            }
-
-            //parameters (shader's variable, transpose, actual 16 values to be 4x4matrix)
-            this.gl.uniformMatrix4fv(this.shader[shaderType].uniform.projection, false, this.projection_matrix);
-            this.gl.uniformMatrix4fv(this.shader[shaderType].uniform.view, false, this.view_matrix);
-            this.gl.uniformMatrix4fv(this.shader[shaderType].uniform.model, false, this.model_matrix);
-
-            this.gl.bindVertexArray(this.vertex_array[this.scene.models[i].type]);
-            this.gl.drawElements(this.gl.TRIANGLES, this.vertex_array[this.scene.models[i].type].face_index_count, this.gl.UNSIGNED_SHORT, 0);
-            this.gl.bindVertexArray(null);
-        }
-        //leave this hardcoded for the lights
-        // draw all light sources
-        for (let i = 0; i < this.scene.light.point_lights.length; i++) {
-            this.gl.useProgram(this.shader['emissive'].program);
-
-            glMatrix.mat4.identity(this.model_matrix);
-            glMatrix.mat4.translate(this.model_matrix, this.model_matrix, this.scene.light.point_lights[i].position);
-            glMatrix.mat4.scale(this.model_matrix, this.model_matrix, glMatrix.vec3.fromValues(0.1, 0.1, 0.1));
-
-            this.gl.uniform3fv(this.shader['emissive'].uniform.material, this.scene.light.point_lights[i].color);
-            this.gl.uniformMatrix4fv(this.shader['emissive'].uniform.projection, false, this.projection_matrix);
-            this.gl.uniformMatrix4fv(this.shader['emissive'].uniform.view, false, this.view_matrix);
-            this.gl.uniformMatrix4fv(this.shader['emissive'].uniform.model, false, this.model_matrix);
-
-            this.gl.bindVertexArray(this.vertex_array['sphere']);
-            this.gl.drawElements(this.gl.TRIANGLES, this.vertex_array['sphere'].face_index_count, this.gl.UNSIGNED_SHORT, 0);
-            this.gl.bindVertexArray(null);
         }
     }
 
     UpdateScene() {
-        //this.scene = scene;
-
-        let cam_pos = this.scene.camera.position;
-        let cam_target = glMatrix.vec3.create();
-        let cam_up = this.scene.camera.up;
-        glMatrix.vec3.add(cam_target, cam_pos, this.scene.camera.direction);
-        glMatrix.mat4.lookAt(this.view_matrix, cam_pos, cam_target, cam_up);
+        if(this.scene_setup && this.scene.camera) {
+            let cam_pos = this.scene.camera.position;
+            let cam_target = glMatrix.vec3.create();
+            let cam_up = this.scene.camera.up;
+            glMatrix.vec3.add(cam_target, cam_pos, this.scene.camera.direction);
+            glMatrix.mat4.lookAt(this.view_matrix, cam_pos, cam_target, cam_up);
+        }
     }
 
     GetFile(url) {
